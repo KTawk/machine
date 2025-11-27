@@ -8,8 +8,8 @@
 #define AIN2UL 22
 #define BIN1UR 19
 #define BIN2UR 18
-#define AIN1DL 5
-#define AIN2DL 4
+#define AIN1DL 4
+#define AIN2DL 5
 #define BIN1DR 17
 #define BIN2DR 16
 
@@ -23,26 +23,26 @@ GamepadPtr gp = nullptr;
 // ======================================================
 void stopMotors()
 {
-    analogWrite(AIN1UL, 0);
-    analogWrite(AIN2UL, 0);
-    analogWrite(BIN1UR, 0);
-    analogWrite(BIN2UR, 0);
-    analogWrite(AIN1DL, 0);
-    analogWrite(AIN2DL, 0);
-    analogWrite(BIN1DR, 0);
-    analogWrite(BIN2DR, 0);
+    analogWrite(AIN1UL, LOW);
+    analogWrite(AIN2UL, LOW);
+    analogWrite(BIN1UR, LOW);
+    analogWrite(BIN2UR, LOW);
+    analogWrite(AIN1DL, LOW);
+    analogWrite(AIN2DL, LOW);
+    analogWrite(BIN1DR, LOW);
+    analogWrite(BIN2DR, LOW);
 }
 
 // Forward
-void moveForward(int spd)
+void moveForward(int pwm)
 {
     analogWrite(AIN1UL, LOW);
-    analogWrite(AIN2UL, spd);
-    analogWrite(BIN1UR, spd);
+    analogWrite(AIN2UL, pwm);
+    analogWrite(BIN1UR, pwm);
     analogWrite(BIN2UR, LOW);
-    analogWrite(AIN1DL, spd);
-    analogWrite(AIN2DL, LOW);
-    analogWrite(BIN1DR, spd);
+    analogWrite(AIN1DL, LOW);
+    analogWrite(AIN2DL, pwm);
+    analogWrite(BIN1DR, pwm);
     analogWrite(BIN2DR, LOW);
 }
 
@@ -53,8 +53,8 @@ void moveBackward(int pwm)
     analogWrite(AIN2UL, LOW);
     analogWrite(BIN1UR, LOW);
     analogWrite(BIN2UR, pwm);
-    analogWrite(AIN1DL, LOW);
-    analogWrite(AIN2DL, pwm);
+    analogWrite(AIN1DL, pwm);
+    analogWrite(AIN2DL, LOW);
     analogWrite(BIN1DR, LOW);
     analogWrite(BIN2DR, pwm);
 }
@@ -63,11 +63,11 @@ void moveBackward(int pwm)
 void moveRight(int pwm)
 {
     analogWrite(AIN1UL, LOW);
-    analogWrite(AIN2UL, pwm);
+    analogWrite(AIN2UL, pwm); //ok
     analogWrite(BIN1UR, LOW);
-    analogWrite(BIN2UR, pwm);
-    analogWrite(AIN1DL, LOW);
-    analogWrite(AIN2DL, pwm);
+    analogWrite(BIN2UR, pwm);//ok
+    analogWrite(AIN1DL, pwm);
+    analogWrite(AIN2DL, LOW);
     analogWrite(BIN1DR, pwm);
     analogWrite(BIN2DR, LOW);
 }
@@ -76,11 +76,11 @@ void moveRight(int pwm)
 void moveLeft(int pwm)
 {
     analogWrite(AIN1UL, pwm);
-    analogWrite(AIN2UL, LOW);
+    analogWrite(AIN2UL, LOW);//ok
     analogWrite(BIN1UR, pwm);
-    analogWrite(BIN2UR, LOW);
-    analogWrite(AIN1DL, pwm);
-    analogWrite(AIN2DL, LOW);
+    analogWrite(BIN2UR, LOW);//ok
+    analogWrite(AIN1DL, LOW);
+    analogWrite(AIN2DL, pwm);
     analogWrite(BIN1DR, LOW);
     analogWrite(BIN2DR, pwm);
 }
@@ -103,7 +103,8 @@ void spinRight(int pwm)
     analogWrite(BIN2DR, pwm);
 }
 
-void spinLeft(int pwm){
+void spinLeft(int pwm)
+{
     Serial.println("SPIN LEFT");
 
     analogWrite(AIN1UL, pwm);
@@ -208,6 +209,10 @@ void loop()
         {
             Serial.println("LEFT");
             moveLeft(speedX);
+        }
+        else if (joyRX < -DEADZONE)
+        {
+            spinLeft(speedRX);
         }
         else
         {

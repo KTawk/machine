@@ -33,7 +33,6 @@ void stopMotors()
     analogWrite(BIN2DR, LOW);
 }
 
-// Forward
 void moveForward(int pwm)
 {
     analogWrite(AIN1UL, LOW);
@@ -46,7 +45,6 @@ void moveForward(int pwm)
     analogWrite(BIN2DR, LOW);
 }
 
-// Backward
 void moveBackward(int pwm)
 {
     analogWrite(AIN1UL, pwm);
@@ -59,33 +57,30 @@ void moveBackward(int pwm)
     analogWrite(BIN2DR, pwm);
 }
 
-// Right
 void moveRight(int pwm)
 {
     analogWrite(AIN1UL, LOW);
-    analogWrite(AIN2UL, pwm); //ok
+    analogWrite(AIN2UL, pwm); 
     analogWrite(BIN1UR, LOW);
-    analogWrite(BIN2UR, pwm);//ok
+    analogWrite(BIN2UR, pwm);
     analogWrite(AIN1DL, pwm);
     analogWrite(AIN2DL, LOW);
     analogWrite(BIN1DR, pwm);
     analogWrite(BIN2DR, LOW);
 }
 
-// Left
 void moveLeft(int pwm)
 {
     analogWrite(AIN1UL, pwm);
-    analogWrite(AIN2UL, LOW);//ok
+    analogWrite(AIN2UL, LOW);
     analogWrite(BIN1UR, pwm);
-    analogWrite(BIN2UR, LOW);//ok
+    analogWrite(BIN2UR, LOW);
     analogWrite(AIN1DL, LOW);
     analogWrite(AIN2DL, pwm);
     analogWrite(BIN1DR, LOW);
     analogWrite(BIN2DR, pwm);
 }
 
-// SPIN (rotation sur place)
 void spinRight(int pwm)
 {
     Serial.println("SPIN RIGHT");
@@ -119,19 +114,76 @@ void spinLeft(int pwm)
     analogWrite(BIN1DR, pwm);
     analogWrite(BIN2DR, LOW);
 }
+// Diagonals
+void moveForwardRight(int pwm) { // moveForwardRight is working correctly
+    analogWrite(AIN1UL, LOW); //clockwise
+    analogWrite(AIN2UL, pwm);
+
+    analogWrite(BIN1UR, LOW);  
+    analogWrite(BIN2UR, LOW);
+
+    analogWrite(AIN1DL, LOW);
+    analogWrite(AIN2DL, LOW);
+
+    analogWrite(BIN1DR, pwm);
+    analogWrite(BIN2DR, LOW); 
+}
+
+void moveBackwardLeft(int pwm) {
+    analogWrite(AIN1UL, pwm);
+    analogWrite(AIN2UL, LOW);
+
+    analogWrite(BIN1UR, LOW);
+    analogWrite(BIN2UR, LOW);
+
+    analogWrite(AIN1DL, LOW);
+    analogWrite(AIN2DL, LOW);
+
+    analogWrite(BIN1DR, LOW);
+    analogWrite(BIN2DR, pwm);
+}
+
+void moveForwardLeft(int pwm) { // moveForwardLeft is working correctly
+    analogWrite(AIN1UL, LOW);
+    analogWrite(AIN2UL, LOW);
+
+    analogWrite(BIN1UR, pwm);
+    analogWrite(BIN2UR, LOW);
+
+    analogWrite(AIN1DL, LOW);
+    analogWrite(AIN2DL, pwm);
+
+    analogWrite(BIN1DR, LOW);
+    analogWrite(BIN2DR, LOW);
+}
+
+void moveBackwardRight(int pwm) {
+    analogWrite(AIN1UL, LOW);
+    analogWrite(AIN2UL, LOW);
+
+    analogWrite(BIN1UR, LOW);
+    analogWrite(BIN2UR, pwm);
+
+    analogWrite(AIN1DL, pwm);
+    analogWrite(AIN2DL, LOW);
+
+    analogWrite(BIN1DR, LOW);
+    analogWrite(BIN2DR, LOW);
+}
+
 // ======================================================
 // GAMEPAD CALLBACK
 // ======================================================
 void onConnectedGamepad(GamepadPtr gpRef)
 {
     gp = gpRef;
-    Serial.println("Manette connectée !");
+    Serial.println("Controller connected !");
 }
 
 void onDisconnectedGamepad(GamepadPtr gpRef)
 {
     gp = nullptr;
-    Serial.println("Manette déconnectée !");
+    Serial.println("Controller diconnected!");
 }
 
 // ======================================================
@@ -155,7 +207,7 @@ void setup()
 
     BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
     BP32.forgetBluetoothKeys();
-    Serial.println("Bluepad32 prêt. Connecte ta manette PS4 !");
+    Serial.println("Bluepad32 ready. Connect your PS4 controller!");
 }
 
 // ======================================================
@@ -185,8 +237,28 @@ void loop()
         int speedY = map(abs(joyY), 0, 512, 0, MAX_SPEED);
         int speedRX = map(abs(joyRX), 0, 512, 0, MAX_SPEED);
 
-        // PRIORITÉ : SPIN > MOUVEMENT
-        if (joyRX > DEADZONE)
+        // DIAGONALS (must be checked before single-axis moves)
+        if (joyY < -DEADZONE && joyX > DEADZONE) {
+            Serial.println("DIAGONAL: Forward Right");
+            moveForwardRight(speedY);
+        }
+        else if (joyY < -DEADZONE && joyX < -DEADZONE) {
+            Serial.println("DIAGONAL: Forward Left");
+            moveForwardLeft(speedY);
+        }
+        else if (joyY > DEADZONE && joyX > DEADZONE) {
+            Serial.println("DIAGONAL: Backward Right");
+            moveBackwardRight(speedY);
+        }
+        else if (joyY > DEADZONE && joyX < -DEADZONE) {
+            Serial.println("DIAGONAL: Backward Left");
+            moveBackwardLeft(speedY);
+        }
+
+        else if (joyRX > DEADZONE) {
+            spinRight(speedRX);
+        }
+        else if (joyRX > DEADZONE)
         {
             spinRight(speedRX);
         }

@@ -60,7 +60,7 @@ void moveBackward(int pwm)
 void moveRight(int pwm)
 {
     analogWrite(AIN1UL, LOW);
-    analogWrite(AIN2UL, pwm); 
+    analogWrite(AIN2UL, pwm);
     analogWrite(BIN1UR, LOW);
     analogWrite(BIN2UR, pwm);
     analogWrite(AIN1DL, pwm);
@@ -115,21 +115,23 @@ void spinLeft(int pwm)
     analogWrite(BIN2DR, LOW);
 }
 // Diagonals
-void moveForwardRight(int pwm) { // moveForwardRight is working correctly
-    analogWrite(AIN1UL, LOW); //clockwise
+void moveForwardRight(int pwm)
+{                             // moveForwardRight is working correctly
+    analogWrite(AIN1UL, LOW); // clockwise
     analogWrite(AIN2UL, pwm);
 
-    analogWrite(BIN1UR, LOW);  
+    analogWrite(BIN1UR, LOW);
     analogWrite(BIN2UR, LOW);
 
     analogWrite(AIN1DL, LOW);
     analogWrite(AIN2DL, LOW);
 
     analogWrite(BIN1DR, pwm);
-    analogWrite(BIN2DR, LOW); 
+    analogWrite(BIN2DR, LOW);
 }
 
-void moveBackwardLeft(int pwm) {
+void moveBackwardLeft(int pwm)
+{
     analogWrite(AIN1UL, pwm);
     analogWrite(AIN2UL, LOW);
 
@@ -143,7 +145,8 @@ void moveBackwardLeft(int pwm) {
     analogWrite(BIN2DR, pwm);
 }
 
-void moveForwardLeft(int pwm) { // moveForwardLeft is working correctly
+void moveForwardLeft(int pwm)
+{ // moveForwardLeft is working correctly
     analogWrite(AIN1UL, LOW);
     analogWrite(AIN2UL, LOW);
 
@@ -157,7 +160,8 @@ void moveForwardLeft(int pwm) { // moveForwardLeft is working correctly
     analogWrite(BIN2DR, LOW);
 }
 
-void moveBackwardRight(int pwm) {
+void moveBackwardRight(int pwm)
+{
     analogWrite(AIN1UL, LOW);
     analogWrite(AIN2UL, LOW);
 
@@ -233,65 +237,90 @@ void loop()
             joyRX = 0;
 
         // Mapping to speed
-        int speedX = map(abs(joyX), 0, 512, 0, MAX_SPEED);
-        int speedY = map(abs(joyY), 0, 512, 0, MAX_SPEED);
-        int speedRX = map(abs(joyRX), 0, 512, 0, MAX_SPEED);
+        int speedX = map(abs(joyX), 0, 509, 0, MAX_SPEED);
+        int speedY = map(abs(joyY), 0, 509, 0, MAX_SPEED);
+        int speedRX = map(abs(joyRX), 0, 509, 0, MAX_SPEED);
 
         // DIAGONALS (must be checked before single-axis moves)
-        if (joyY < -DEADZONE && joyX > DEADZONE) {
-            Serial.println("DIAGONAL: Forward Right");
-            moveForwardRight(speedY);
-        }
-        else if (joyY < -DEADZONE && joyX < -DEADZONE) {
-            Serial.println("DIAGONAL: Forward Left");
-            moveForwardLeft(speedY);
-        }
-        else if (joyY > DEADZONE && joyX > DEADZONE) {
-            Serial.println("DIAGONAL: Backward Right");
-            moveBackwardRight(speedY);
-        }
-        else if (joyY > DEADZONE && joyX < -DEADZONE) {
-            Serial.println("DIAGONAL: Backward Left");
-            moveBackwardLeft(speedY);
-        }
+        float angle = atan2(joyY, joyX) * 180.0 / PI; // Use -joyY to match up movement
+        Serial.printf("X: %d  Y: %d  Angle: %.2f°\n", joyX, joyY, angle);
 
-        else if (joyRX > DEADZONE) {
+        // Speed based on strongest axis
+        int speed = map(max(abs(joyX), abs(joyY)), 0, 512, 0, MAX_SPEED);
+
+        if (joyRX > DEADZONE)
+        {
+            Serial.println("SPIN RIGHT (joystick right)");
             spinRight(speedRX);
-        }
-        else if (joyRX > DEADZONE)
-        {
-            spinRight(speedRX);
-        }
-        else if (joyY < -DEADZONE)
-        {
-            Serial.println("FORWARD");
-            moveForward(speedY);
-        }
-        else if (joyY > DEADZONE)
-        {
-            Serial.println("BACKWARD");
-            moveBackward(speedY);
-        }
-        else if (joyX > DEADZONE)
-        {
-            Serial.println("RIGHT");
-            moveRight(speedX);
-        }
-        else if (joyX < -DEADZONE)
-        {
-            Serial.println("LEFT");
-            moveLeft(speedX);
+            return;
         }
         else if (joyRX < -DEADZONE)
         {
+            Serial.println("SPIN LEFT (joystick left)");
             spinLeft(speedRX);
+            return;
         }
-        else
+
+        if (abs(joyX) < DEADZONE && abs(joyY) < DEADZONE)
         {
             stopMotors();
             Serial.println("STOP");
+            return;
+        }
+
+        if (abs(joyX) < DEADZONE && abs(joyY) < DEADZONE)
+        {
+            stopMotors();
+            Serial.println("STOP");
+            return;
+        }
+
+        // Updated angle zones (fixed flip)
+        if (angle >= -135 && angle < -45)
+        { // Forward area
+            if (angle > -90 - 22 && angle < -90 + 22)
+            {
+                Serial.println("FORWARD");
+                moveForward(speed);
+            }
+            else if (angle < -90)
+            {
+                Serial.println("FORWARD LEFT");
+                moveForwardLeft(speed);
+            }
+            else
+            {
+                Serial.println("FORWARD RIGHT");
+                moveForwardRight(speed);
+            }
+        }
+        else if (angle >= -45 && angle < 45)
+        { // Right
+            Serial.println("RIGHT");
+            moveRight(speed);
+        }
+        else if (angle >= 45 && angle < 135)
+        { // Backward
+            if (angle > 90 - 22 && angle < 90 + 22)
+            {
+                Serial.println("BACKWARD");
+                moveBackward(speed);
+            }
+            else if (angle < 90)
+            {
+                Serial.println("BACKWARD RIGHT");
+                moveBackwardRight(speed);
+            }
+            else
+            {
+                Serial.println("BACKWARD LEFT");
+                moveBackwardLeft(speed);
+            }
+        }
+        else
+        { // Left
+            Serial.println("LEFT");
+            moveLeft(speed);
         }
     }
-
-    delay(20);
 }
